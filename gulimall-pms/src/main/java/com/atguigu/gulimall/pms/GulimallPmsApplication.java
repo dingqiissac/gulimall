@@ -14,7 +14,7 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * 2、使用@MapperScan扫描所有mapper接口
  *
  */
-@EnableSwagger2
+
 @MapperScan(basePackages = "com.atguigu.gulimall.pms.dao")
 @SpringBootApplication
 public class GulimallPmsApplication {
