@@ -41,6 +41,11 @@
 
         <!--只要引入了jdbc-starter模块默认数据库驱动的版本，是由springboot版本仲裁中心控制的-->
         <!--  换数据库驱动  -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.5.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
