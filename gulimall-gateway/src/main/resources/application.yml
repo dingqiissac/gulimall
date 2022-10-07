@@ -1,0 +1,62 @@
+server:
+  port: 88
+
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: pms_route
+          uri: lb://gulimall-pms
+          predicates:
+            - Path=/pms/**
+
+        - id: gulimall-oms_route
+          uri: lb://gulimall-oms
+          predicates:
+            - Path=/oms/**
+
+        - id: gulimall-sms_route
+          uri: lb://gulimall-sms
+          predicates:
+            - Path=/sms/**
+
+        - id: gulimall-ums_route
+          uri: lb://gulimall-ums
+          predicates:
+            - Path=/ums/**
+
+        - id: gulimall-wms_route
+          uri: lb://gulimall-wms
+          predicates:
+            - Path=/wms/**
+
+        - id: pms_route1
+          uri: lb://gulimall-oms
+          predicates:
+            - Path=/info
+
+#      globalcors:
+#        cors-configurations:
+#          '[/**]':
+#              allowedOrigins: "*"
+#              allowedMethods:
+#                - GET
+#                - POST
+#                - DELETE
+#                - PUT
+#                - OPTIONS
+#                - HEAD
+#              allowCredentials: true # \u5141\u8BB8\u643A\u5E26\u81EA\u5B9A\u4E49cookie\u8DE8\u57DF
+
+
+#      - id: world_route
+#        uri: lb://gulimall-pms
+#        predicates:
+#          - Path=/world
+#      - id: hello_route
+#        uri: lb://gulimall-oms
+#        predicates:
+#          - Path=/hello
+#        filters:
+#          - AddResponseHeader=leifengyang,666
