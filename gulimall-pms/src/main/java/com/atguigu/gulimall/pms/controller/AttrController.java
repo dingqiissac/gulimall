@@ -8,6 +8,7 @@ import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.pms.entity.requestEntity.AttrEntityWithGroupId;
+import com.atguigu.gulimall.pms.entity.responseEntity.AttrEntityWithGroupId2;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +76,7 @@ public class AttrController {
     @GetMapping("/info/{attrId}")
     @PreAuthorize("hasAuthority('pms:attr:info')")
     public Resp<AttrEntity> info(@PathVariable("attrId") Long attrId){
-		AttrEntity attr = attrService.getById(attrId);
+        AttrEntityWithGroupId2 attr = attrService.getAttrEntityWithGroupIdByAttrId(attrId);
 
         return Resp.ok(attr);
     }

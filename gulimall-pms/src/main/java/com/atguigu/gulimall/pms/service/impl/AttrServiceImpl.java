@@ -1,8 +1,11 @@
 package com.atguigu.gulimall.pms.service.impl;
 
 import com.atguigu.gulimall.pms.dao.AttrAttrgroupRelationDao;
+import com.atguigu.gulimall.pms.dao.AttrGroupDao;
 import com.atguigu.gulimall.pms.entity.AttrAttrgroupRelationEntity;
+import com.atguigu.gulimall.pms.entity.AttrGroupEntity;
 import com.atguigu.gulimall.pms.entity.requestEntity.AttrEntityWithGroupId;
+import com.atguigu.gulimall.pms.entity.responseEntity.AttrEntityWithGroupId2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements AttrService {
     @Autowired
     AttrDao attrDao;
+
+    @Autowired
+    AttrGroupDao attrGroupDao;
 
     @Autowired
     AttrAttrgroupRelationDao attrAttrgroupRelationDao;
@@ -82,6 +88,32 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
 
         attrAttrgroupRelationDao.insert(attrAttrgroupRelationEntity);
 
+    }
+
+    @Transactional
+    @Override
+    public AttrEntityWithGroupId2 getAttrEntityWithGroupIdByAttrId(Long attrId) {
+        AttrEntityWithGroupId2 attrEntityWithGroupId2 = new AttrEntityWithGroupId2();
+      //先找基本属性
+        AttrEntity attrEntity = this.getById(attrId);
+
+        Long attrId1 = attrEntity.getAttrId();
+       //根据基本属性 找 groupId
+        QueryWrapper<AttrAttrgroupRelationEntity> relationEntityQueryWrapper = new QueryWrapper<>();
+        relationEntityQueryWrapper.eq("attr_id",attrId1);
+        AttrAttrgroupRelationEntity attrAttrgroupRelationEntity =
+                attrAttrgroupRelationDao.selectOne(relationEntityQueryWrapper);
+
+        //再找attrGroup
+        BeanUtils.copyProperties(attrEntity,attrEntityWithGroupId2);
+        AttrGroupEntity attr_group = new AttrGroupEntity();
+        if(attrAttrgroupRelationEntity!=null){
+             attr_group = attrGroupDao.selectOne(new QueryWrapper<AttrGroupEntity>().
+                    eq("attr_group_id", attrAttrgroupRelationEntity.getAttrGroupId()));
+        }
+        attrEntityWithGroupId2.setGroup(attr_group);
+
+        return attrEntityWithGroupId2;
     }
 
 }

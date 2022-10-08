@@ -1,12 +1,12 @@
 package com.atguigu.gulimall.pms.controller;
 
 import java.util.Arrays;
-import java.util.Map;
 
 
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.pms.entity.requestEntity.RelationsAttrsAndGroupId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.atguigu.gulimall.pms.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.pms.service.AttrAttrgroupRelationService;
-
-
 
 
 /**
@@ -32,6 +30,22 @@ import com.atguigu.gulimall.pms.service.AttrAttrgroupRelationService;
 public class AttrAttrgroupRelationController {
     @Autowired
     private AttrAttrgroupRelationService attrAttrgroupRelationService;
+
+    @ApiOperation("删除关联关系")
+    @PostMapping("/delete/attr")
+    public Resp<Object> deleteRelationsAttrsAndGroupId
+            (@RequestBody RelationsAttrsAndGroupId[] vo) {
+        Boolean ok;
+
+        for (RelationsAttrsAndGroupId relationsAttrsAndGroupId : vo) {
+            ok = attrAttrgroupRelationService.deleteRelationsAttrsAndGroupId(relationsAttrsAndGroupId);
+            if (ok == false) {
+                return Resp.ok(Boolean.FALSE);
+            }
+        }
+
+        return Resp.ok(Boolean.TRUE);
+    }
 
     /**
      * 列表
@@ -52,8 +66,8 @@ public class AttrAttrgroupRelationController {
     @ApiOperation("详情查询")
     @GetMapping("/info/{id}")
     @PreAuthorize("hasAuthority('pms:attrattrgrouprelation:info')")
-    public Resp<AttrAttrgroupRelationEntity> info(@PathVariable("id") Long id){
-		AttrAttrgroupRelationEntity attrAttrgroupRelation = attrAttrgroupRelationService.getById(id);
+    public Resp<AttrAttrgroupRelationEntity> info(@PathVariable("id") Long id) {
+        AttrAttrgroupRelationEntity attrAttrgroupRelation = attrAttrgroupRelationService.getById(id);
 
         return Resp.ok(attrAttrgroupRelation);
     }
@@ -64,8 +78,8 @@ public class AttrAttrgroupRelationController {
     @ApiOperation("保存")
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('pms:attrattrgrouprelation:save')")
-    public Resp<Object> save(@RequestBody AttrAttrgroupRelationEntity attrAttrgroupRelation){
-		attrAttrgroupRelationService.save(attrAttrgroupRelation);
+    public Resp<Object> save(@RequestBody AttrAttrgroupRelationEntity attrAttrgroupRelation) {
+        attrAttrgroupRelationService.save(attrAttrgroupRelation);
 
         return Resp.ok(null);
     }
@@ -76,8 +90,8 @@ public class AttrAttrgroupRelationController {
     @ApiOperation("修改")
     @PostMapping("/update")
     @PreAuthorize("hasAuthority('pms:attrattrgrouprelation:update')")
-    public Resp<Object> update(@RequestBody AttrAttrgroupRelationEntity attrAttrgroupRelation){
-		attrAttrgroupRelationService.updateById(attrAttrgroupRelation);
+    public Resp<Object> update(@RequestBody AttrAttrgroupRelationEntity attrAttrgroupRelation) {
+        attrAttrgroupRelationService.updateById(attrAttrgroupRelation);
 
         return Resp.ok(null);
     }
@@ -88,8 +102,8 @@ public class AttrAttrgroupRelationController {
     @ApiOperation("删除")
     @PostMapping("/delete")
     @PreAuthorize("hasAuthority('pms:attrattrgrouprelation:delete')")
-    public Resp<Object> delete(@RequestBody Long[] ids){
-		attrAttrgroupRelationService.removeByIds(Arrays.asList(ids));
+    public Resp<Object> delete(@RequestBody Long[] ids) {
+        attrAttrgroupRelationService.removeByIds(Arrays.asList(ids));
 
         return Resp.ok(null);
     }

@@ -1,12 +1,14 @@
 package com.atguigu.gulimall.pms.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.pms.entity.responseEntity.AttrGroupIdWithAttrsAndRelations;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,14 @@ import com.atguigu.gulimall.pms.service.AttrGroupService;
 public class AttrGroupController {
     @Autowired
     private AttrGroupService attrGroupService;
+
+    @ApiOperation("查询某个分组以及分组下面的所有属性信息")
+    @GetMapping("/info/withattrs/{attrGroupId}")
+    public Resp<Object> queryAttrsByGroupId(@PathVariable(value = "attrGroupId") Integer groupId) {
+        AttrGroupIdWithAttrsAndRelations res = attrGroupService.queryAttrsByGroupId(groupId);
+
+        return Resp.ok(res);
+    }
 
     @ApiOperation("查询某个分组下对应的所有属性")
     @GetMapping("/list/category/{groupId}")
