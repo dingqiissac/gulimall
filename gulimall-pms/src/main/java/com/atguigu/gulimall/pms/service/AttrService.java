@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.pms.service;
 
+import com.atguigu.gulimall.pms.entity.requestEntity.AttrEntityWithGroupId;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.gulimall.pms.entity.AttrEntity;
 import com.atguigu.gulimall.commons.bean.PageVo;
@@ -16,5 +17,11 @@ import com.atguigu.gulimall.commons.bean.QueryCondition;
 public interface AttrService extends IService<AttrEntity> {
 
     PageVo queryPage(QueryCondition params);
+
+    PageVo queryPageUnderCatId(QueryCondition queryCondition, Integer catId);
+
+    PageVo querySaleAttrPageUnderCatId(QueryCondition queryCondition, Integer catId);
+
+    void saveAttrEntityAndRelationship(AttrEntityWithGroupId attr);
 }
 

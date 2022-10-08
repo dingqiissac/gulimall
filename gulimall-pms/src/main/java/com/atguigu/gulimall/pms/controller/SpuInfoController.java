@@ -7,6 +7,7 @@ import java.util.Map;
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.pms.entity.requestEntity.UpdateBatch;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,45 @@ import com.atguigu.gulimall.pms.service.SpuInfoService;
 public class SpuInfoController {
     @Autowired
     private SpuInfoService spuInfoService;
+
+    @ApiOperation("商品上架、下架")
+    @GetMapping("/updateStatus/{spuId}")
+    public Resp<Boolean> updateStatus(@PathVariable(value = "spuId") Integer spuId,
+                                     @RequestParam(value = "status") Integer status) {
+        Boolean OK = spuInfoService.updateStatusBySpuId(spuId,status);
+
+        if(OK==true){
+            return Resp.ok(true);
+        }
+
+        return Resp.fail(false);
+    }
+
+    @ApiOperation("批量上架、下架商品")
+    @PostMapping("/batch/updateStatus")
+    public Resp<Boolean> updateStatusByBatch(@RequestBody UpdateBatch updateBatch) {
+        Boolean OK = spuInfoService.updateStatusByBatch(updateBatch);
+
+        if(OK==true){
+            return Resp.ok(true);
+        }
+
+        return Resp.fail(false);
+    }
+
+
+
+
+    @ApiOperation("按照spuid,spuname,分类id检索商品")
+    @GetMapping("/simple/search")
+    @PreAuthorize("hasAuthority('pms:spuinfo:list')")
+    public Resp<PageVo> simpleSearch(QueryCondition queryCondition,
+                                     @RequestParam(value = "catId",defaultValue = "0") Integer catId) {
+        PageVo page = spuInfoService.queryPageByCatId(queryCondition,catId);
+
+        return Resp.ok(page);
+    }
+
 
     /**
      * 列表

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.pms.entity.requestEntity.AttrEntityWithGroupId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,27 @@ import com.atguigu.gulimall.pms.service.AttrService;
 public class AttrController {
     @Autowired
     private AttrService attrService;
+
+    @ApiOperation("查询某个三级分类下的所有销售属性")
+    @GetMapping("/sale/{catId}")
+    public Resp<PageVo> querySaleAttrPageUnderCatId(QueryCondition queryCondition,
+                                            @PathVariable(value = "catId") Integer catId) {
+        PageVo page = attrService.querySaleAttrPageUnderCatId(queryCondition,catId);
+
+        return Resp.ok(page);
+    }
+
+
+    @ApiOperation("查询某个三级分类下的所有基本属性")
+    @GetMapping("/base/{catId}")
+    public Resp<PageVo> queryBaseAttrPageUnderCatId(QueryCondition queryCondition,
+                                        @PathVariable(value = "catId") Integer catId) {
+        PageVo page = attrService.queryPageUnderCatId(queryCondition,catId);
+
+        return Resp.ok(page);
+    }
+
+
 
     /**
      * 列表
@@ -64,8 +86,8 @@ public class AttrController {
     @ApiOperation("保存")
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('pms:attr:save')")
-    public Resp<Object> save(@RequestBody AttrEntity attr){
-		attrService.save(attr);
+    public Resp<Object> save(@RequestBody AttrEntityWithGroupId attr){
+		attrService.saveAttrEntityAndRelationship(attr);
 
         return Resp.ok(null);
     }

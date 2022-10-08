@@ -33,6 +33,15 @@ public class AttrGroupController {
     @Autowired
     private AttrGroupService attrGroupService;
 
+    @ApiOperation("查询某个分组下对应的所有属性")
+    @GetMapping("/list/category/{groupId}")
+    public Resp<PageVo> queryInfoByGroupId(QueryCondition queryCondition,
+                                           @PathVariable(value = "groupId") Integer groupId) {
+        PageVo page = attrGroupService.queryInfoByGroupId(queryCondition,groupId);
+
+        return Resp.ok(page);
+    }
+
     /**
      * 列表
      */
