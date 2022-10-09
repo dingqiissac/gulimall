@@ -49,7 +49,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
 
         return new PageVo(page);
     }
-
+    @Transactional
     @Override
     public PageVo queryInfoByGroupId(QueryCondition queryCondition, Integer groupId) {
         IPage<AttrGroupEntity> page = new Query<AttrGroupEntity>().getPage(queryCondition);
@@ -57,7 +57,38 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
         attrGroupEntityQueryWrapper.eq("catelog_id",groupId);
 
         IPage<AttrGroupEntity> pageVo = this.page(page, attrGroupEntityQueryWrapper);
-        return new PageVo(pageVo);
+        //查出所有分组
+        List<AttrGroupEntity> records = pageVo.getRecords();
+
+        ArrayList<AttrGroupIdWithAttrsAndRelations> attrGroupIdWithAttrsAndRelations
+                = new ArrayList<>(records.size());
+
+        for (AttrGroupEntity record : records) {
+            AttrGroupIdWithAttrsAndRelations attrGroupIdWithAttrsAndRelations1 = new AttrGroupIdWithAttrsAndRelations();
+            //查出当前分组的所有的attrIds
+            Long attrGroupId = record.getAttrGroupId();
+            List<AttrAttrgroupRelationEntity> relationEntities =
+                    attrAttrgroupRelationDao.selectList(new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrGroupId));
+            ArrayList<Long> attrsId = new ArrayList<>();
+            for (AttrAttrgroupRelationEntity relationEntity : relationEntities) {
+                attrsId.add(relationEntity.getAttrId());
+            }
+
+            List<AttrEntity> attrs = new ArrayList<>();
+            //根据 attrids 查出所有属性
+            if(!CollectionUtils.isEmpty(attrsId)){
+                attrs= attrDao.selectList(new QueryWrapper<AttrEntity>().in("attr_id", attrsId));
+            }
+
+
+            BeanUtils.copyProperties(record,attrGroupIdWithAttrsAndRelations1);
+            attrGroupIdWithAttrsAndRelations1.setAttrEntities(attrs);
+
+            attrGroupIdWithAttrsAndRelations.add(attrGroupIdWithAttrsAndRelations1);
+
+        }
+
+        return new PageVo(attrGroupIdWithAttrsAndRelations,(int)pageVo.getTotal(),(int)pageVo.getSize(),(int)pageVo.getCurrent());
     }
 
     @Transactional

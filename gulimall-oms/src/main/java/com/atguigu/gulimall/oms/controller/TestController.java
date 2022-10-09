@@ -20,7 +20,7 @@ public class TestController {
     @GetMapping("/info")
     public String info1(){
 
-     //   String info = pmsCalls.info();
+        String info = pmsCalls.info();
         return "oms" + name;
     }
 

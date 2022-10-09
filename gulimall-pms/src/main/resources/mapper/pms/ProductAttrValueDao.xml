@@ -3,7 +3,7 @@
 
 <mapper namespace="com.atguigu.gulimall.pms.dao.ProductAttrValueDao">
 
-	<!-- 可根据自己的需求，是否要使用 -->
+    <!-- 可根据自己的需求，是否要使用 -->
     <resultMap type="com.atguigu.gulimall.pms.entity.ProductAttrValueEntity" id="productAttrValueMap">
         <result property="id" column="id"/>
         <result property="spuId" column="spu_id"/>
@@ -14,5 +14,28 @@
         <result property="quickShow" column="quick_show"/>
     </resultMap>
 
+    <!--void insertBatch(@Param("baseAttrs") ArrayList<ProductAttrValueEntity> productAttrValueEntities)-->
+    <insert id="insertBatch">
+        INSERT INTO `pms_product_attr_value`
+        (
+        spu_id,
+        attr_id,
+        attr_name,
+        attr_value,
+        attr_sort,
+        quick_show
+        )
+        VALUES
+        <foreach collection="baseAttrs" item="attr" separator=",">
+            (
+            #{attr.spuId},
+            #{attr.attrId},
+            #{attr.attrName},
+            #{attr.attrValue},
+            #{attr.attrSort},
+            #{attr.quickShow}
+            )
+        </foreach>
+    </insert>
 
 </mapper>

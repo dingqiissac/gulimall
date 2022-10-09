@@ -7,6 +7,9 @@ import java.util.Map;
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.pms.dao.SpuInfoDescDao;
+import com.atguigu.gulimall.pms.entity.SpuInfoDescEntity;
+import com.atguigu.gulimall.pms.entity.requestEntity.SpuAllSave;
 import com.atguigu.gulimall.pms.entity.requestEntity.UpdateBatch;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -101,11 +104,13 @@ public class SpuInfoController {
     /**
      * 保存
      */
+    @Autowired
+    SpuInfoDescDao spuInfoDescDao;
     @ApiOperation("保存")
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('pms:spuinfo:save')")
-    public Resp<Object> save(@RequestBody SpuInfoEntity spuInfo){
-		spuInfoService.save(spuInfo);
+    public Resp<Object> save(@RequestBody SpuAllSave spuInfo){
+		spuInfoService.spuBigSaveAll(spuInfo);
 
         return Resp.ok(null);
     }
