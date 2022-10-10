@@ -7,6 +7,7 @@ import com.atguigu.gulimall.pms.dao.*;
 import com.atguigu.gulimall.pms.entity.*;
 import com.atguigu.gulimall.pms.entity.requestEntity.*;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.aop.framework.AopContext;
@@ -110,7 +111,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         return update > 0 ? true : false;
     }
-    @Transactional
+    @GlobalTransactional
     @Override
     public void spuBigSaveAll(SpuAllSave spuInfo) {
         SpuInfoService spuInfoService = (SpuInfoService)AopContext.currentProxy();
@@ -124,7 +125,10 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         spuInfoService.saveSpuBaseAttrs(spuId, baseAttrs);
 
         //save sku and relevant sale attr
+        //feign inside
         spuInfoService.saveSkuInfos(spuId, spuInfo.getSkus());
+
+        int m = 10/0;
 
         //save discount ticket
 

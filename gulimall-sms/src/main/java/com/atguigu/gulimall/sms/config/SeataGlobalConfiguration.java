@@ -1,6 +1,5 @@
-package com.atguigu.gulimall.pms.config;
+package com.atguigu.gulimall.sms.config;
 
-import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import com.zaxxer.hikari.HikariDataSource;
 import io.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,14 +11,7 @@ import org.springframework.context.annotation.Primary;
 import javax.sql.DataSource;
 
 @Configuration
-public class PmsMyBatisConfig {
-
-    @Bean
-    public PaginationInterceptor paginationInterceptor(){
-        PaginationInterceptor paginationInterceptor = new PaginationInterceptor();
-        return paginationInterceptor;
-    }
-
+public class SeataGlobalConfiguration {
     @ConfigurationProperties(prefix = "spring.datasource")
     @Bean
     public DataSource originDataSource(@Value("${spring.datasource.url}") String url){
@@ -33,6 +25,4 @@ public class PmsMyBatisConfig {
     public DataSource dataSource(DataSource originDataSource){
         return new DataSourceProxy(originDataSource);
     }
-
-
 }
