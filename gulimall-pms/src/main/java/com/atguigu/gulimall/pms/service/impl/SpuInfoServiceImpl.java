@@ -9,8 +9,10 @@ import com.atguigu.gulimall.pms.entity.requestEntity.*;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -23,6 +25,7 @@ import com.atguigu.gulimall.commons.bean.Query;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 
 import com.atguigu.gulimall.pms.service.SpuInfoService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service("spuInfoService")
@@ -107,26 +110,26 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         return update > 0 ? true : false;
     }
-
-
+    @Transactional
     @Override
     public void spuBigSaveAll(SpuAllSave spuInfo) {
+        SpuInfoService spuInfoService = (SpuInfoService)AopContext.currentProxy();
         //1.1save spu basic data
-        Long spuId = this.saveSpuBaseInfo(spuInfo);
+        Long spuId = spuInfoService.saveSpuBaseInfo(spuInfo);
         //1.2 save spu images
-        this.saveSpuImages(spuId, spuInfo.getSpuImages());
+        spuInfoService.saveSpuImages(spuId, spuInfo.getSpuImages());
 
         //save spu basic attrs data
         List<BaseAttrVo> baseAttrs = spuInfo.getBaseAttrs();
-        this.saveSpuBaseAttrs(spuId, baseAttrs);
+        spuInfoService.saveSpuBaseAttrs(spuId, baseAttrs);
 
         //save sku and relevant sale attr
-        this.saveSkuInfos(spuId, spuInfo.getSkus());
+        spuInfoService.saveSkuInfos(spuId, spuInfo.getSkus());
 
         //save discount ticket
 
     }
-
+    @Transactional
     @Override
     public Long saveSpuBaseInfo(SpuAllSave spuInfo) {
         SpuInfoEntity spuInfoEntity = new SpuInfoEntity();
@@ -136,7 +139,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         this.baseMapper.insert(spuInfoEntity);
         return spuInfoEntity.getId();
     }
-
+    @Transactional
     @Override
     public void saveSpuImages(Long spuId, String[] spuImages) {
         StringBuffer stringBuffer = new StringBuffer();
@@ -151,7 +154,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         spuInfoDescDao.insert(spuInfoDescEntity);
     }
-
+    @Transactional
     @Override
     public void saveSpuBaseAttrs(Long spuId, List<BaseAttrVo> baseAttrs) {
 
@@ -175,7 +178,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         productAttrValueDao.insertBatch(productAttrValueEntities);
     }
-
+    @Transactional
     @Override
     public void saveSkuInfos(Long spuId, List<SkuVo> skus) {
         //query spuInfo by spuId
