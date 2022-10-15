@@ -1,8 +1,14 @@
 package com.atguigu.gulimall.pms.service.impl;
 
+import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.commons.es.EsProductAttributeValue;
+import com.atguigu.gulimall.commons.es.EsSkuVo;
 import com.atguigu.gulimall.commons.to.SkuSaleInfoTo;
+import com.atguigu.gulimall.commons.to.WareSkuVo;
 import com.atguigu.gulimall.commons.utils.AppUtils;
+import com.atguigu.gulimall.pms.controller.feign.EsSpuToEsController;
 import com.atguigu.gulimall.pms.controller.feign.SmsSaleInfoController;
+import com.atguigu.gulimall.pms.controller.feign.WmsStockController;
 import com.atguigu.gulimall.pms.dao.*;
 import com.atguigu.gulimall.pms.entity.*;
 import com.atguigu.gulimall.pms.entity.requestEntity.*;
@@ -13,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -27,6 +32,7 @@ import com.atguigu.gulimall.commons.bean.QueryCondition;
 
 import com.atguigu.gulimall.pms.service.SpuInfoService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service("spuInfoService")
@@ -55,6 +61,18 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
     @Autowired
     SkuSaleAttrValueDao skuSaleAttrValueDao;
+
+    @Autowired
+    EsSpuToEsController esSpuToEsController;
+
+    @Autowired
+    BrandDao brandDao;
+
+    @Autowired
+    CategoryDao categoryDao;
+
+    @Autowired
+    WmsStockController wmsStockController;
 
     @Override
     public PageVo queryPage(QueryCondition params) {
@@ -90,16 +108,128 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
     }
 
     @Override
-    public Boolean updateStatusBySpuId(Integer spuId, Integer status) {
-        //update table set status = '0' where id = spuId
-        UpdateWrapper<SpuInfoEntity> updateWrapper = new UpdateWrapper<SpuInfoEntity>();
+    public void updateStatusBySpuId(Integer spuId, Integer status) {
+        //上架 放在es 检索里：下架 就是删除。。。成功之后 修改db
+        SpuInfoEntity spuInfoEntity = spuInfoDao.selectById(spuId);
+        BrandEntity brandEntity = brandDao.selectById(spuInfoEntity.getBrandId());
+        CategoryEntity categoryEntity = categoryDao.selectById(spuInfoEntity.getCatalogId());
 
-        updateWrapper.set("publish_status", status).eq("id", spuId);
+        ArrayList<EsSkuVo> esSkuVos = new ArrayList<>();
+        List<SkuInfoEntity> skus = skuInfoDao.selectList(new QueryWrapper<SkuInfoEntity>().eq("spu_id", spuId));
 
-        int update = spuInfoDao.update(null, updateWrapper);
+        ArrayList<Long> longs = new ArrayList<>();
+        skus.forEach(skuId -> {
+            longs.add(skuId.getSkuId());
+        });
 
-        return update > 0 ? true : false;
+        //查询库存wms
+        Resp<List<WareSkuVo>> listResp = wmsStockController.queryStockBySkuId(longs);
+        List<WareSkuVo> skuData = listResp.getData();
+
+        //查出spu 属性
+        List<ProductAttrValueEntity> spuAttrs = productAttrValueDao.
+                selectList(new QueryWrapper<ProductAttrValueEntity>().eq("spu_id", spuId));
+
+        List<Long> attrs = new ArrayList<>();
+        spuAttrs.forEach(item -> {
+            attrs.add(item.getAttrId());
+        });
+
+        List<AttrEntity> attrEntities = attrDao.selectList(new QueryWrapper<AttrEntity>().in("attr_id", attrs).eq("search_type", 1));
+        ArrayList<EsProductAttributeValue> esProductAttributeValues = new ArrayList<>();
+        attrEntities.forEach(item -> {
+            spuAttrs.forEach(s -> {
+                if (item.getAttrId() == s.getAttrId()) {
+                    EsProductAttributeValue esProductAttributeValues1 = new EsProductAttributeValue();
+                    esProductAttributeValues1.setId(s.getId());
+                    esProductAttributeValues1.setName(s.getAttrName());
+                    esProductAttributeValues1.setProductAttributeId(s.getAttrId());
+                    esProductAttributeValues1.setSpuId(Long.valueOf(String.valueOf(spuId)));
+                    esProductAttributeValues1.setValue(s.getAttrValue());
+                    esProductAttributeValues.add(esProductAttributeValues1);
+                }
+            });
+        });
+        //productAttrValueEntities to
+
+
+        if (!CollectionUtils.isEmpty(skus)) {
+            //装配 封装 list
+            skus.forEach(sku -> {
+                EsSkuVo esSkuVo = new EsSkuVo();
+                EsSkuVo encapsulate = encapsulate(esSkuVo, sku, brandEntity, categoryEntity, skuData, esProductAttributeValues);
+                esSkuVos.add(encapsulate);
+            });
+
+            //开始上架或下架
+            if (status == 0) {
+                //下架
+                soldOut(spuId, status, esSkuVos);
+            } else {
+                //上架
+                soldIn(spuId, status, esSkuVos);
+            }
+        }
+
+
     }
+
+    private EsSkuVo encapsulate(EsSkuVo esSkuVo, SkuInfoEntity sku, BrandEntity brandEntity,
+                                CategoryEntity categoryEntity,
+                                List<WareSkuVo> skuData, ArrayList<EsProductAttributeValue> productAttrValueEntities) {
+        esSkuVo.setId(sku.getSkuId());
+        esSkuVo.setBrandId(sku.getBrandId());
+        //查找品牌name
+
+        if (brandEntity != null) {
+            esSkuVo.setBrandName(brandEntity.getName());
+        }
+        esSkuVo.setName(sku.getSkuTitle());
+        esSkuVo.setPrice(sku.getPrice());
+        esSkuVo.setPic(sku.getSkuDefaultImg());
+        esSkuVo.setProductCategoryId(sku.getCatalogId());
+        //查找分类名
+
+        if (categoryEntity != null) {
+            esSkuVo.setProductCategoryName(categoryEntity.getName());
+        }
+        esSkuVo.setSale(0);
+        esSkuVo.setSort(0);
+
+        skuData.forEach(item -> {
+            if (item.getSkuId() == esSkuVo.getId()) {
+                esSkuVo.setStock(item.getStock());
+            }
+        });
+
+        esSkuVo.setAttrValueList(productAttrValueEntities);
+
+        return esSkuVo;
+    }
+
+    private void updateStatusSpuId(Integer spuId, Integer status) {
+        UpdateWrapper<SpuInfoEntity> updateWrapper = new UpdateWrapper<SpuInfoEntity>();
+        updateWrapper.set("publish_status", status).eq("id", spuId);
+        spuInfoDao.update(null, updateWrapper);
+    }
+
+    //下架
+    private void soldOut(Integer spuId, Integer status, List esSkuVos) {
+        Resp resp = esSpuToEsController.spuDown(esSkuVos);
+        if (resp.getCode() == 0) {
+            updateStatusSpuId(spuId, status);
+        }
+    }
+
+    //上架
+    private void soldIn(Integer spuId, Integer status, List esSkuVos) {
+        Resp resp = esSpuToEsController.spuUp(esSkuVos);
+        if (resp.getCode() == 0) {
+            updateStatusSpuId(spuId, status);
+        }
+
+    }
+
 
     @Override
     public Boolean updateStatusByBatch(UpdateBatch updateBatch) {
@@ -111,10 +241,11 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         return update > 0 ? true : false;
     }
+
     @GlobalTransactional
     @Override
     public void spuBigSaveAll(SpuAllSave spuInfo) {
-        SpuInfoService spuInfoService = (SpuInfoService)AopContext.currentProxy();
+        SpuInfoService spuInfoService = (SpuInfoService) AopContext.currentProxy();
         //1.1save spu basic data
         Long spuId = spuInfoService.saveSpuBaseInfo(spuInfo);
         //1.2 save spu images
@@ -128,11 +259,10 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         //feign inside
         spuInfoService.saveSkuInfos(spuId, spuInfo.getSkus());
 
-        int m = 10/0;
-
         //save discount ticket
 
     }
+
     @Transactional
     @Override
     public Long saveSpuBaseInfo(SpuAllSave spuInfo) {
@@ -143,6 +273,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         this.baseMapper.insert(spuInfoEntity);
         return spuInfoEntity.getId();
     }
+
     @Transactional
     @Override
     public void saveSpuImages(Long spuId, String[] spuImages) {
@@ -158,6 +289,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         spuInfoDescDao.insert(spuInfoDescEntity);
     }
+
     @Transactional
     @Override
     public void saveSpuBaseAttrs(Long spuId, List<BaseAttrVo> baseAttrs) {
@@ -182,6 +314,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         productAttrValueDao.insertBatch(productAttrValueEntities);
     }
+
     @Transactional
     @Override
     public void saveSkuInfos(Long spuId, List<SkuVo> skus) {
@@ -251,7 +384,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
             //send data to SMS system
 
         }
-        log.info("pms ready to send data 发出数据 ...{}",skuSaleInfoTos);
+        log.info("pms ready to send data 发出数据 ...{}", skuSaleInfoTos);
         smsSaleInfoController.saveSkuSaleInfos(skuSaleInfoTos);
         log.info("pms 发出数据 done...");
 

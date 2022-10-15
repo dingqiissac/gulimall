@@ -20,5 +20,7 @@ public interface WareSkuService extends IService<WareSkuEntity> {
     PageVo queryPage(QueryCondition params);
 
     List<WareSkuEntity> queryStockBySkuId(Long skuId);
+
+    List<WareSkuEntity> queryStockBySkuIds(List<Long> skuIds);
 }
 

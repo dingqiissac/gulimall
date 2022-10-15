@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.wms.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,9 @@ import com.atguigu.gulimall.wms.service.WareSkuService;
 @Service("wareSkuService")
 public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> implements WareSkuService {
 
+    @Autowired
+    WareSkuDao wareSkuDao;
+
     @Override
     public PageVo queryPage(QueryCondition params) {
         IPage<WareSkuEntity> page = this.page(
@@ -37,6 +41,12 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         List<WareSkuEntity> wareSkuEntities = this.baseMapper.selectList(wareSkuEntityQueryWrapper);
 
         return wareSkuEntities;
+    }
+
+    @Override
+    public List<WareSkuEntity> queryStockBySkuIds(List<Long> skuIds) {
+        List<WareSkuEntity> skuStocks = wareSkuDao.selectList(new QueryWrapper<WareSkuEntity>().in("sku_id", skuIds));
+        return skuStocks;
     }
 
 }

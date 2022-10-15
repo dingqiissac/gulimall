@@ -41,13 +41,8 @@ public class SpuInfoController {
     @GetMapping("/updateStatus/{spuId}")
     public Resp<Boolean> updateStatus(@PathVariable(value = "spuId") Integer spuId,
                                      @RequestParam(value = "status") Integer status) {
-        Boolean OK = spuInfoService.updateStatusBySpuId(spuId,status);
-
-        if(OK==true){
-            return Resp.ok(true);
-        }
-
-        return Resp.fail(false);
+        spuInfoService.updateStatusBySpuId(spuId,status);
+        return Resp.fail(null);
     }
 
     @ApiOperation("批量上架、下架商品")

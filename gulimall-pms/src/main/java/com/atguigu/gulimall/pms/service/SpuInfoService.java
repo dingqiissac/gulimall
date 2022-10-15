@@ -25,7 +25,7 @@ public interface SpuInfoService extends IService<SpuInfoEntity> {
 
     PageVo queryPageByCatId(QueryCondition queryCondition, Integer catId);
 
-    Boolean updateStatusBySpuId(Integer spuId, Integer status);
+    void updateStatusBySpuId(Integer spuId, Integer status);
 
     Boolean updateStatusByBatch(UpdateBatch updateBatch);
 
