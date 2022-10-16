@@ -4,5 +4,5 @@ public class Constant {
 
     public static String ES_SPU_INDEX = "productionindex";
 
-    public static String ES_SPU_TYPE = "productiontype";
+    public static String ES_SPU_TYPE = "_doc";
 }

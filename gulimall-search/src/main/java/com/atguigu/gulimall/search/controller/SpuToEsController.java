@@ -5,7 +5,9 @@ import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.commons.es.EsSkuVo;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Delete;
+import io.searchbox.core.DocumentResult;
 import io.searchbox.core.Index;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
+@Slf4j
 @RestController
 @RequestMapping("/es")
 public class SpuToEsController {
@@ -37,7 +39,8 @@ public class SpuToEsController {
                     .build();
 
             try {
-                jestClient.execute(index);
+                DocumentResult execute = jestClient.execute(index);
+                log.info(execute.getErrorMessage());
             } catch (Exception e) {
 
             }
