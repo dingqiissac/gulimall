@@ -31,10 +31,10 @@ spring:
           predicates:
             - Path=/wms/**
 
-        - id: pms_route1
-          uri: lb://gulimall-oms
+        - id: gulimall-search
+          uri: lb://gulimall-search
           predicates:
-            - Path=/info
+            - Path=/api/search/**
 
 #      globalcors:
 #        cors-configurations:
