@@ -1,10 +1,10 @@
 package com.atguigu.gulimall.pms.service.impl;
 
+import com.atguigu.gulimall.pms.entity.requestEntity.CategoryWithChildrenVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -55,6 +55,22 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         List<CategoryEntity> categoryEntities = categoryDao.selectList(queryWrapper);
 
         return categoryEntities;
+    }
+
+    @Override
+    public List<CategoryEntity> getCategoryByLevelAndShowStatus(int level, int status) {
+        List<CategoryEntity> categoryEntities = categoryDao.selectList(new QueryWrapper<CategoryEntity>()
+                .eq("cat_level", level).eq("show_status", status));
+
+        return categoryEntities;
+    }
+
+    @Override
+    public List<CategoryWithChildrenVo> getCategoryAndThirdLevelCateByParentId(Long id) {
+
+        List<CategoryWithChildrenVo> res = categoryDao.selectCateChildren(id);
+
+        return res;
     }
 
 
