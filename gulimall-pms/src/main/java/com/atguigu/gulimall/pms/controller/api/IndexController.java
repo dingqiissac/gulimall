@@ -5,6 +5,7 @@ import com.atguigu.gulimall.pms.entity.CategoryEntity;
 import com.atguigu.gulimall.pms.entity.requestEntity.CategoryWithChildrenVo;
 import com.atguigu.gulimall.pms.service.CategoryService;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class IndexController {
 
     @ApiOperation("获取所有1级分类")
     @GetMapping("/cates")
-    public Resp<List<CategoryEntity>> level1CateLogs(){
+    public Resp<List<CategoryEntity>> level1CateLogs(Integer level){
         List<CategoryEntity> categoryByLevelAndShowStatus =
                 categoryService.getCategoryByLevel(0);
 

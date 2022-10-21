@@ -9,7 +9,7 @@ spring:
         - id: pms_route
           uri: lb://gulimall-pms
           predicates:
-            - Path=/pms/**,/api/index/**
+            - Path=/pms/**,/api/**
 
         - id: gulimall-oms_route
           uri: lb://gulimall-oms

@@ -22,3 +22,17 @@
 #      id-type: auto
 #server:
 #  port: 10008
+
+#redis 配置
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    #   password: ''
+    #   连接超时时间
+    #  timeout: 3000
+
+
+
+
+

@@ -11,6 +11,7 @@ public class GulimallPmsApplicationTests {
 
     @Test
     public void contextLoads() {
+
     }
 
 }
