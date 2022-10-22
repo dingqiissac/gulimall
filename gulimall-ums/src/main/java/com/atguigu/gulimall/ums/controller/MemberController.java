@@ -1,8 +1,6 @@
 package com.atguigu.gulimall.ums.controller;
 
 import java.util.Arrays;
-import java.util.Map;
-
 
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
@@ -10,7 +8,6 @@ import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.ums.entity.vo.MemberLogInVo;
 import com.atguigu.gulimall.ums.entity.vo.MemberRegister;
 import com.atguigu.gulimall.ums.entity.vo.MemberRespVo;
-import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,9 @@
 package com.atguigu.gulimall.gateway.config;
 
+import com.atguigu.gulimall.gateway.filter.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -35,4 +37,11 @@ public class GulimallGateWayConfig {
 
         return filter;
     }
+
+//    @Bean
+//    @Order(-1)
+//    public JwtFilter getGlobalFilter(){
+//        return new JwtFilter();
+//    }
+
 }
