@@ -15,4 +15,6 @@ public class Constant {
     public static String CACHE_CATELOG3 = "cache:cateLog3";
 
     public static String LOCK = "lock";
+
+    public static String LOGIN_USER_PREFIX = "login:user:";
 }

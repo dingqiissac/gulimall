@@ -82,6 +82,11 @@
             <artifactId>seata-all</artifactId>
             <version>${seata.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.0</version>
+        </dependency>
 
 
     </dependencies>
