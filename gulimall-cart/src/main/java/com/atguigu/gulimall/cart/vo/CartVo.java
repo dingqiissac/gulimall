@@ -33,7 +33,11 @@ public class CartVo {
     public Integer getTotal() {
         Integer num = 0;
         if (items != null && items.size() > 0) {
+
             for (CartItemVo item : items) {
+                if (!item.isCheck()) {
+                    continue;
+                }
                 num += item.getNum();
             }
         }
@@ -45,6 +49,9 @@ public class CartVo {
 
         if (items != null && items.size() > 0) {
             for (CartItemVo item : items) {
+                if (!item.isCheck()) {
+                    continue;
+                }
                 BigDecimal totalPrice = item.getTotalPrice();
 
                 decimal = decimal.add(totalPrice);
@@ -61,6 +68,10 @@ public class CartVo {
         BigDecimal reduce = new BigDecimal("0.0");
         //拿到每一项的满减信息和优惠信息
         for (CartItemVo item : items) {
+
+            if (!item.isCheck()) {
+                continue;
+            }
 
             List<SkuFullReductionVo> reductions = item.getReductions();
             //计算满减打折等可以减掉的金额

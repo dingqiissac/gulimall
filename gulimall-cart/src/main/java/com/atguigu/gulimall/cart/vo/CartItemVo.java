@@ -27,6 +27,8 @@ public class CartItemVo {
     private BigDecimal price;//单价
     @Setter  @Getter
     private Integer num;//数量
+    @Setter  @Getter
+    private boolean check = true;//chosen
 
     private BigDecimal totalPrice;//商品总价
 

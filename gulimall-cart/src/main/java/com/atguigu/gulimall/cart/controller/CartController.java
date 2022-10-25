@@ -6,12 +6,16 @@ import com.atguigu.gulimall.cart.vo.CartVo;
 import com.atguigu.gulimall.commons.bean.Resp;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Api(tags = "购物车系统")
 @RequestMapping("api/cart")
@@ -21,6 +25,37 @@ public class CartController {
 
     @Autowired
     CartService cartService;
+
+
+    @Autowired
+    @Qualifier("nonMainThreadPool")
+    ThreadPoolExecutor poolExecutor;
+
+    @ApiOperation("change chosen status")
+    @GetMapping("/stop/non")
+    public Resp<Object> stopPoolExecutor(){
+
+        poolExecutor.shutdown();
+
+        HashMap<String, Object> stringObjectHashMap = new HashMap<>();
+        stringObjectHashMap.put("queue",poolExecutor.getQueue().size());
+        stringObjectHashMap.put("ActiveCount",poolExecutor.getActiveCount());
+
+        return Resp.ok(stringObjectHashMap);
+    }
+
+
+    @ApiOperation("change chosen status")
+    @PostMapping("/check")
+    public Resp<CartVo> checkCart(String userKey,@RequestParam(value = "skuIds") Long[] skuIds,
+                                  @RequestParam(value = "status")Integer status,
+                                @RequestHeader(name = "Authorization",required = false) String authorization){
+
+
+        CartVo cartVo =   cartService.checkCart(userKey,authorization,skuIds,status);
+
+        return Resp.ok(cartVo);
+    }
 
 
     /**
@@ -66,7 +101,7 @@ public class CartController {
     public Resp<Object> addToCart(@RequestParam(name = "skuId",required = true) Long skuId,
                                   @RequestParam(name = "num",defaultValue = "1") Integer num,
                                   String userKey,
-                                  @RequestHeader(name = "Authorization",required = false) String authorization){
+                                  @RequestHeader(name = "Authorization",required = false) String authorization) throws ExecutionException, InterruptedException {
 
         //1、判断是否登录了
         CartVo cartVo = cartService.addToCart(skuId, num, userKey, authorization);

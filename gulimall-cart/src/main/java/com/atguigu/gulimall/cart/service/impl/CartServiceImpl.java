@@ -2,9 +2,9 @@ package com.atguigu.gulimall.cart.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gulimall.cart.feign.SkuFeignService;
+import com.atguigu.gulimall.cart.feign.SmsFeignService;
 import com.atguigu.gulimall.cart.service.CartService;
-import com.atguigu.gulimall.cart.vo.CartItemVo;
-import com.atguigu.gulimall.cart.vo.CartVo;
+import com.atguigu.gulimall.cart.vo.*;
 import com.atguigu.gulimall.commons.bean.Constant;
 import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.commons.to.SkuInfoVo;
@@ -14,11 +14,15 @@ import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -33,6 +37,12 @@ public class CartServiceImpl implements CartService {
     @Autowired
     SkuFeignService skuFeignService;
 
+    @Autowired
+    @Qualifier("mainThreadPool")
+    ThreadPoolExecutor poolExecutor;
+
+    @Autowired
+    SmsFeignService smsFeignService;
     /**
      * 获取购物车
      *
@@ -51,6 +61,8 @@ public class CartServiceImpl implements CartService {
             if (cartKey.isMerge()) {
                 RMap<String, String> map = mergeCarts(userKey, Long.parseLong(cartKey.getKey()));
             }
+        }else {
+            cartVo.setUserKey(cartKey.getKey());
         }
         List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey.getKey());
 
@@ -74,7 +86,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartVo addToCart(Long skuId, Integer num, String userKey, String authorization) {
+    public CartVo addToCart(Long skuId, Integer num, String userKey, String authorization) throws ExecutionException, InterruptedException {
         CartKey key = getKey(userKey, authorization);
         String cartKey = key.getKey();
         //1、获取购物车
@@ -101,7 +113,47 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartVo updateCart(Long skuId, Integer num, String userKey, String authorization) {
-        return null;
+        CartKey key = getKey(userKey, authorization);
+        String cartKey = key.getKey();
+
+        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX + cartKey);
+        String item = map.get(skuId.toString());
+        CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
+        vo.setNum(num);
+
+        map.put(skuId.toString(),JSON.toJSONString(vo));
+
+        //get all items
+        List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey);
+        CartVo cartVo = new CartVo();
+
+        cartVo.setItems(itemsFromCart);
+
+        return cartVo;
+    }
+
+    @Override
+    public CartVo checkCart(String userKey, String authorization, Long[] skuIds, Integer status) {
+        CartKey key = getKey(userKey, authorization);
+        String cartKey = key.getKey();
+
+        RMap<String, String> itemsMap = redisson.getMap(Constant.CART_PREFIX + cartKey);
+
+        for (Long skuId : skuIds) {
+            if(itemsMap.containsKey(skuId.toString())){
+                String item = itemsMap.get(skuId.toString());
+                CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
+                vo.setCheck(status==0?true:false);
+                itemsMap.put(skuId.toString(),JSON.toJSONString(vo));
+            }
+        }
+
+        List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey);
+        CartVo cartVo = new CartVo();
+
+        cartVo.setItems(itemsFromCart);
+
+        return cartVo;
     }
 
     private RMap<String, String> mergeCarts(String userKey, Long userId) {
@@ -133,7 +185,7 @@ public class CartServiceImpl implements CartService {
         return map;
     }
 
-    private CartItemVo addCartItemVo(Long skuId, Integer num, String cartKey) {
+    private CartItemVo addCartItemVo(Long skuId, Integer num, String cartKey) throws ExecutionException, InterruptedException {
         RMap<String, Object> cart = redisson.getMap(Constant.CART_PREFIX + cartKey);
 
         CartItemVo vo = null;
@@ -144,13 +196,46 @@ public class CartServiceImpl implements CartService {
             cart.put(skuId.toString(), JSON.toJSONString(itemVo));
             vo = itemVo;
         } else {
-            //1、查询sku当前商品的详情；
-            Resp<SkuInfoVo> sKuInfoForCart = skuFeignService.getSKuInfoForCart(skuId);
-            SkuInfoVo data = sKuInfoForCart.getData();
-            //2、购物项
             CartItemVo itemVo = new CartItemVo();
-            BeanUtils.copyProperties(data, itemVo);
-            itemVo.setNum(num);
+            //sku基本信息
+            CompletableFuture<Void> firstTask = CompletableFuture.runAsync(() -> {
+                //1、查询sku当前商品的详情；
+                Resp<SkuInfoVo> sKuInfoForCart = skuFeignService.getSKuInfoForCart(skuId);
+                SkuInfoVo data = sKuInfoForCart.getData();
+                //2、购物项
+                BeanUtils.copyProperties(data, itemVo);
+                itemVo.setNum(num);
+            },poolExecutor);
+
+            //查询优惠卷
+            CompletableFuture<Void> secondTask = CompletableFuture.runAsync(() -> {
+                //remote获取当前优惠券信息
+                Resp<List<SkuCouponTo>> coupons = smsFeignService.getCoupons(skuId);
+                List<SkuCouponTo> couponData = coupons.getData();
+
+                ArrayList<SkuCouponVo> skuCouponVos = new ArrayList<>();
+                if (couponData != null && couponData.size() > 0) {
+                    for (SkuCouponTo couponDatum : couponData) {
+                        SkuCouponVo skuCouponVo = new SkuCouponVo();
+                        BeanUtils.copyProperties(couponDatum, skuCouponVo);
+                        skuCouponVos.add(skuCouponVo);
+                    }
+                }
+                itemVo.setCoupons(skuCouponVos);
+            }, poolExecutor);
+
+            //查询满减
+            CompletableFuture<Void> thirdTask = CompletableFuture.runAsync(() -> {
+                Resp<List<SkuFullReductionVo>> reductions = smsFeignService.getReductions(skuId);
+                List<SkuFullReductionVo> reductionData = reductions.getData();
+                if(reductionData!=null && reductionData.size()>0){
+                    itemVo.setReductions(reductionData);
+                }
+                }, poolExecutor);
+
+            CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(firstTask, secondTask, thirdTask);
+
+            voidCompletableFuture.get();
 
             //3、保存购物车数据
             cart.put(skuId.toString(), JSON.toJSONString(itemVo));
