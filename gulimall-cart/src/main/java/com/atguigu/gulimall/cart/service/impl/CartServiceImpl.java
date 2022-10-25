@@ -45,32 +45,32 @@ public class CartServiceImpl implements CartService {
 
         CartVo cartVo = new CartVo();
 
-        List<CartItemVo> cartItemVos = new ArrayList<>();
         CartKey cartKey = getKey(userKey, authorization);
         //购物车在Redis中保存
-        String key = Constant.CART_PREFIX + cartKey.getKey();
-
-        //1、获取购物车
-        RMap<String, Object> map = redisson.getMap(key);
-        //判断如果两个都有需要合并购物车
-        if (cartKey.isMerge() == true) {
-            //如果需要合并。合并
-
-        } else {
-            //获取到所有的购物车里面的购物项
-            Collection<Object> values = map.values();
-            if (values != null && values.size() > 0) {
-                for (Object value : values) {
-                    String json = (String) value;
-                    CartItemVo itemVo = JSON.parseObject(json, CartItemVo.class);
-                    cartItemVos.add(itemVo);
-                }
+        if (cartKey.isLogin()) {
+            if (cartKey.isMerge()) {
+                RMap<String, String> map = mergeCarts(userKey, Long.parseLong(cartKey.getKey()));
             }
-
         }
+        List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey.getKey());
 
-        cartVo.setItems(cartItemVos);
+        cartVo.setItems(itemsFromCart);
         return cartVo;
+    }
+
+    private List<CartItemVo> getItemsFromCart(String key){
+        ArrayList<CartItemVo> cartItemVos = new ArrayList<>();
+
+        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX+key);
+        //获取到所有的购物车里面的购物项
+        Collection<String> values = map.values();
+        if (values != null && values.size() > 0) {
+            for (String value : values) {
+                CartItemVo itemVo = JSON.parseObject(value, CartItemVo.class);
+                cartItemVos.add(itemVo);
+            }
+        }
+        return cartItemVos;
     }
 
     @Override
@@ -78,16 +78,70 @@ public class CartServiceImpl implements CartService {
         CartKey key = getKey(userKey, authorization);
         String cartKey = key.getKey();
         //1、获取购物车
-        RMap<String, Object> map = redisson.getMap(Constant.CART_PREFIX + cartKey);
+        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX + cartKey);
 
+        if (key.isLogin() && !StringUtils.isEmpty(userKey)) {
+            // login status
+            map = mergeCarts(userKey, Long.parseLong(cartKey));
+        }
+
+        //2、添加购物车之前先确定购物车中有没有这个商品，如果有就数量+1 如果没有新增
+        CartItemVo resVo = addCartItemVo(skuId, num, cartKey);
+
+        CartVo cartVo = new CartVo();
+
+        cartVo.setItems(Arrays.asList(resVo));
+
+        if (!key.isLogin()) {
+            cartVo.setUserKey(cartKey);
+            redisTemplate.expire(Constant.CART_PREFIX + cartKey, Constant.CART_TIMEOUT, TimeUnit.MINUTES);
+        }
+        return cartVo;
+    }
+
+    @Override
+    public CartVo updateCart(Long skuId, Integer num, String userKey, String authorization) {
+        return null;
+    }
+
+    private RMap<String, String> mergeCarts(String userKey, Long userId) {
+        RMap<String, String> tempMap = redisson.getMap(Constant.CART_PREFIX + userKey);
+        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX + userId);
+
+        Set<String> itemsIds = tempMap.keySet();
+        for (String itemsId : itemsIds) {
+            if (map.containsKey(itemsId)) {
+                //登入的map
+                String onLineItem = (String) map.get(itemsId);
+                CartItemVo onLineItemVo = JSON.parseObject(onLineItem, CartItemVo.class);
+                //未登入的map
+                String tempItem = (String) tempMap.get(itemsId);
+                CartItemVo tempItemVo = JSON.parseObject(tempItem, CartItemVo.class);
+
+                onLineItemVo.setNum(onLineItemVo.getNum() + tempItemVo.getNum());
+                map.put(itemsId, JSON.toJSONString(onLineItemVo));
+            } else {
+                String tempItem = (String) tempMap.get(itemsId);
+                CartItemVo tempItemVo = JSON.parseObject(tempItem, CartItemVo.class);
+
+                map.put(itemsId, JSON.toJSONString(tempItemVo));
+            }
+        }
+
+        tempMap.delete();
+
+        return map;
+    }
+
+    private CartItemVo addCartItemVo(Long skuId, Integer num, String cartKey) {
+        RMap<String, Object> cart = redisson.getMap(Constant.CART_PREFIX + cartKey);
 
         CartItemVo vo = null;
-        //2、添加购物车之前先确定购物车中有没有这个商品，如果有就数量+1 如果没有新增
-        String item = (String) map.get(skuId.toString());
+        String item = (String) cart.get(skuId.toString());
         if (!StringUtils.isEmpty(item)) {
             CartItemVo itemVo = JSON.parseObject(item, CartItemVo.class);
             itemVo.setNum(itemVo.getNum() + num);
-            map.put(skuId.toString(), JSON.toJSONString(itemVo));
+            cart.put(skuId.toString(), JSON.toJSONString(itemVo));
             vo = itemVo;
         } else {
             //1、查询sku当前商品的详情；
@@ -99,21 +153,10 @@ public class CartServiceImpl implements CartService {
             itemVo.setNum(num);
 
             //3、保存购物车数据
-            map.put(skuId.toString(), JSON.toJSONString(itemVo));
+            cart.put(skuId.toString(), JSON.toJSONString(itemVo));
             vo = itemVo;
         }
-
-
-
-        CartVo cartVo = new CartVo();
-        cartVo.setUserKey(cartKey);
-
-        cartVo.setItems(Arrays.asList(vo));
-
-        if (!key.isLogin()) {
-            redisTemplate.expire(Constant.CART_PREFIX + cartKey, Constant.CART_TIMEOUT, TimeUnit.MINUTES);
-        }
-        return cartVo;
+        return vo;
     }
 
 
@@ -125,7 +168,7 @@ public class CartServiceImpl implements CartService {
         if (!StringUtils.isEmpty(authorization)) {
             //登录了;
             Map<String, Object> body = GuliJwtUtils.getJwtBody(authorization);
-            Long id = (Long) body.get("id");
+            Long id = Long.parseLong(String.valueOf(body.get("id")));
             key = id + "";
             cartKey.setKey(key);
             cartKey.setLogin(true);

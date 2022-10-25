@@ -10,7 +10,9 @@ spring:
           uri: lb://gulimall-pms
           predicates:
             - Path=/pms/**,/api/item/**
-#,/api/**
+          filters:
+            - RewritePath=/api/(?<segment>.*), /$\{segment}
+
         - id: gulimall-oms_route
           uri: lb://gulimall-oms
           predicates:
@@ -24,7 +26,9 @@ spring:
         - id: gulimall-ums_route
           uri: lb://gulimall-ums
           predicates:
-            - Path=/ums/**
+            - Path=/ums/**,/api/ums/**
+          filters:
+            - RewritePath=/api/(?<segment>.*), /$\{segment}
 
         - id: gulimall-cart
           uri: lb://gulimall-cart
@@ -44,8 +48,8 @@ spring:
 
 
 
-  # filters:
-  #  - RewritePath=/api/(?<segment>.*), /$\{segment}
+#   filters:
+#    - RewritePath=/api/(?<segment>.*), /$\{segment}
 #      globalcors:
 #        cors-configurations:
 #          '[/**]':

@@ -41,6 +41,18 @@ public class CartController {
         return Resp.ok(cartVo);
     }
 
+    @ApiOperation("更新购物车商品数量")
+    @PostMapping("/update")
+    public Resp<CartVo> updateCart(@RequestParam(name = "skuId",required = true) Long skuId,
+                                   @RequestParam(name = "num",defaultValue = "1") Integer num,
+                                   String userKey,
+                                   @RequestHeader(name = "Authorization",required = false) String authorization){
+
+        CartVo cartVo = cartService.updateCart(skuId,num,userKey,authorization);
+
+        return Resp.ok(cartVo);
+    }
+
 
     /**
      *

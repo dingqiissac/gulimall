@@ -18,5 +18,5 @@ public class Constant {
 
     public static String LOGIN_USER_PREFIX = "login:user:";
 
-    public static Long LOGIN_TIME_OFF = 30L;
+    public static Long LOGIN_TIME_OFF = 3000L;
 }
