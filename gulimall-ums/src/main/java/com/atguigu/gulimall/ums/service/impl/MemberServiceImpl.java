@@ -92,7 +92,8 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
 
         if (matches) {
             String uuid = UUID.randomUUID().toString().replace("-", "");
-            stringRedisTemplate.opsForValue().set(Constant.LOGIN_USER_PREFIX+uuid, JSON.toJSONString(user),30L, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set
+                    (Constant.LOGIN_USER_PREFIX+uuid, JSON.toJSONString(user),Constant.LOGIN_TIME_OFF, TimeUnit.MINUTES);
 
             Map<String,Object> map = new HashMap<>();
             map.put("token",uuid);

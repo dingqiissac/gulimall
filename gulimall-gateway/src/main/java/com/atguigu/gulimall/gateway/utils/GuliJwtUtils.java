@@ -52,7 +52,7 @@ public class GuliJwtUtils {
     public static void checkJwt(String jwt){
 
         //去掉Bearer 前缀
-        String substring = jwt.substring(beareaPrefix.length());
+        String substring = jwt.substring(beareaPrefix.length(),jwt.length());
 
         //解出来的串才是jwt
         Jwts.parser().setSigningKey(key).parse(substring);

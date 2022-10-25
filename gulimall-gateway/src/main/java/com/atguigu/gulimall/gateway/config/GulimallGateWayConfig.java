@@ -1,6 +1,6 @@
 package com.atguigu.gulimall.gateway.config;
 
-import com.atguigu.gulimall.gateway.filter.JwtFilter;
+//import com.atguigu.gulimall.gateway.filter.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;

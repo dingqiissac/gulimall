@@ -8,6 +8,7 @@ import java.util.Map;
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
+import com.atguigu.gulimall.commons.to.SkuInfoVo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,14 @@ import com.atguigu.gulimall.pms.service.SkuInfoService;
 public class SkuInfoController {
     @Autowired
     private SkuInfoService skuInfoService;
+
+    @GetMapping("/cart/{skuId}")
+    public Resp<Object> getSKuInfoForCart(@PathVariable("skuId") Long skuId){
+        SkuInfoVo vo = skuInfoService.getSkuVo(skuId);
+        return Resp.ok(vo);
+    }
+
+
 
     @ApiOperation("获取某个spu下的所有sku信息")
     @GetMapping("/list/spu/{spuId}")

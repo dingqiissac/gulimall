@@ -1,4 +1,4 @@
-package com.atguigu.gulimall.commons.bean;
+package com.atguigu.gulimall.gateway.bean;
 
 public class Constant {
 
@@ -19,8 +19,4 @@ public class Constant {
     public static String LOGIN_USER_PREFIX = "login:user:";
 
     public static Long LOGIN_TIME_OFF = 30L;
-
-    public static  final String CART_PREFIX = "cart:user:";
-
-    public static Long CART_TIMEOUT = 60*24*30L;
 }
