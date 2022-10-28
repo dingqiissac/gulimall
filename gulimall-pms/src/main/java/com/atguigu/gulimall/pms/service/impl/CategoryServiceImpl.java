@@ -46,7 +46,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public List<CategoryEntity> getCategoryByLevel(Integer level) {
-        List<CategoryEntity> categoryEntities = null;
+        List<CategoryEntity> categoryEntities = new ArrayList<>();
         switch (level) {
             case 0:
                 return redisAndDB(categoryEntities, level, Constant.CACHE_CATELOG);
