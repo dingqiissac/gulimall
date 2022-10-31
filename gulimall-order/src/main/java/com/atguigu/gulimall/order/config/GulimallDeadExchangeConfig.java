@@ -17,28 +17,28 @@ import java.util.Map;
 @Configuration
 public class GulimallDeadExchangeConfig {
 
-    @Bean("orderCreateExchange")
+    @Bean("CreateOrderEX")
     public Exchange orderCreateExchange(){
 
         /**
          * String name, boolean durable, boolean autoDelete, Map<String, Object> arguments
          */
-        return new DirectExchange("orderCreateExchange",true,false,null);
+        return new DirectExchange("CreateOrderEX",true,false,null);
     }
 
-    @Bean("deadOrderStorageQueue")  //死信队列，千万不要有人消费
+    @Bean("CreateOrderQu")  //死信队列，千万不要有人消费
     public Queue deadOrderStorageQueue(){
         /**
          * String name, boolean durable, boolean exclusive, boolean autoDelete, Map<String, Object>
          */
         Map<String,Object> properties = new HashMap<>();
-        properties.put("x-dead-letter-exchange","orderDeadExchange"); //信死了以后发给那个交换机，而不是丢弃
+        properties.put("x-dead-letter-exchange","DeadExchange"); //信死了以后发给那个交换机，而不是丢弃
         properties.put("x-dead-letter-routing-key","dead.order");
         properties.put("x-message-ttl",1000*30);//ms为单位
-        return new Queue("deadOrderStorageQueue",true,false,false,properties);
+        return new Queue("CreateOrderQu",true,false,false,properties);
     }
 
-    @Bean("deadOrderRoutingBinding")
+    @Bean("CreateOrderBinding")
     public Binding deadOrderRoutingBinding(){
         /**
          * String destination,
@@ -47,29 +47,29 @@ public class GulimallDeadExchangeConfig {
          * String routingKey,
          * Map<String, Object> arguments
          */
-        return new Binding("deadOrderStorageQueue",
+        return new Binding("CreateOrderQu",
                 Binding.DestinationType.QUEUE,
-                "orderCreateExchange",
+                "CreateOrderEX",
                 "create.order",null);
     }
 
     //============以上订单创建的信息能保存到死信队列里面==============
-    @Bean("orderDeadExchange")
+    @Bean("DeadExchange")
     public Exchange orderDeadExchange(){
 
-        return new DirectExchange("orderDeadExchange",true,false,null);
+        return new DirectExchange("DeadExchange",true,false,null);
     }
 
-    @Bean("closeOrderQueue")
+    @Bean("deadOrderQueue")
     public Queue deadOrderQueue(){
-        return new Queue("closeOrderQueue",true,false,false,null);
+        return new Queue("deadOrderQueue",true,false,false,null);
     }
 
     @Bean("deadBinding")
     public Binding deadBinding(){
-        return new Binding("closeOrderQueue",
+        return new Binding("deadOrderQueue",
                 Binding.DestinationType.QUEUE,
-                "orderDeadExchange",
+                "DeadExchange",
                 "dead.order",
                 null);
     }

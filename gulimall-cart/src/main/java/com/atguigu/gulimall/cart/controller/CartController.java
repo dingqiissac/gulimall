@@ -31,6 +31,19 @@ public class CartController {
     @Qualifier("nonMainThreadPool")
     ThreadPoolExecutor poolExecutor;
 
+
+    @ApiOperation("返回购物车里所有选中的商品")
+    @GetMapping("/getItemForOrder/{id}")
+    public Resp<CartVo> selectCartWithStatus(@PathVariable(value = "id") Long id){
+
+        CartVo res = cartService.selectCartWithStatus(id);
+
+        return Resp.ok(res);
+    }
+
+
+
+
     @ApiOperation("change chosen status")
     @GetMapping("/stop/non")
     public Resp<Object> stopPoolExecutor(){

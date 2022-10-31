@@ -43,6 +43,7 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     SmsFeignService smsFeignService;
+
     /**
      * 获取购物车
      *
@@ -61,7 +62,7 @@ public class CartServiceImpl implements CartService {
             if (cartKey.isMerge()) {
                 RMap<String, String> map = mergeCarts(userKey, Long.parseLong(cartKey.getKey()));
             }
-        }else {
+        } else {
             cartVo.setUserKey(cartKey.getKey());
         }
         List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey.getKey());
@@ -70,10 +71,10 @@ public class CartServiceImpl implements CartService {
         return cartVo;
     }
 
-    private List<CartItemVo> getItemsFromCart(String key){
+    private List<CartItemVo> getItemsFromCart(String key) {
         ArrayList<CartItemVo> cartItemVos = new ArrayList<>();
 
-        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX+key);
+        RMap<String, String> map = redisson.getMap(Constant.CART_PREFIX + key);
         //获取到所有的购物车里面的购物项
         Collection<String> values = map.values();
         if (values != null && values.size() > 0) {
@@ -121,7 +122,7 @@ public class CartServiceImpl implements CartService {
         CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
         vo.setNum(num);
 
-        map.put(skuId.toString(),JSON.toJSONString(vo));
+        map.put(skuId.toString(), JSON.toJSONString(vo));
 
         //get all items
         List<CartItemVo> itemsFromCart = getItemsFromCart(cartKey);
@@ -140,11 +141,11 @@ public class CartServiceImpl implements CartService {
         RMap<String, String> itemsMap = redisson.getMap(Constant.CART_PREFIX + cartKey);
 
         for (Long skuId : skuIds) {
-            if(itemsMap.containsKey(skuId.toString())){
+            if (itemsMap.containsKey(skuId.toString())) {
                 String item = itemsMap.get(skuId.toString());
                 CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
-                vo.setCheck(status==0?true:false);
-                itemsMap.put(skuId.toString(),JSON.toJSONString(vo));
+                vo.setCheck(status == 0 ? true : false);
+                itemsMap.put(skuId.toString(), JSON.toJSONString(vo));
             }
         }
 
@@ -152,6 +153,32 @@ public class CartServiceImpl implements CartService {
         CartVo cartVo = new CartVo();
 
         cartVo.setItems(itemsFromCart);
+
+        return cartVo;
+    }
+
+    @Override
+    public CartVo selectCartWithStatus(Long id) {
+
+        RMap<String, String> itemsMap = redisson.getMap(Constant.CART_PREFIX + id);
+
+        Collection<String> items = itemsMap.values();
+
+        ArrayList<CartItemVo> cartItemVos = new ArrayList<>();
+
+        CartVo cartVo = new CartVo();
+
+        if (items != null && items.size() > 0) {
+            items.forEach(item -> {
+                CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
+                if (vo.isCheck()) {
+                    cartItemVos.add(vo);
+                }
+            });
+        }
+
+        cartVo.setItems(cartItemVos);
+
 
         return cartVo;
     }
@@ -205,7 +232,7 @@ public class CartServiceImpl implements CartService {
                 //2、购物项
                 BeanUtils.copyProperties(data, itemVo);
                 itemVo.setNum(num);
-            },poolExecutor);
+            }, poolExecutor);
 
             //查询优惠卷
             CompletableFuture<Void> secondTask = CompletableFuture.runAsync(() -> {
@@ -228,10 +255,10 @@ public class CartServiceImpl implements CartService {
             CompletableFuture<Void> thirdTask = CompletableFuture.runAsync(() -> {
                 Resp<List<SkuFullReductionVo>> reductions = smsFeignService.getReductions(skuId);
                 List<SkuFullReductionVo> reductionData = reductions.getData();
-                if(reductionData!=null && reductionData.size()>0){
+                if (reductionData != null && reductionData.size() > 0) {
                     itemVo.setReductions(reductionData);
                 }
-                }, poolExecutor);
+            }, poolExecutor);
 
             CompletableFuture<Void> voidCompletableFuture = CompletableFuture.allOf(firstTask, secondTask, thirdTask);
 

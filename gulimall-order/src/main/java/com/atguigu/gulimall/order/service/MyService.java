@@ -1,6 +1,7 @@
 package com.atguigu.gulimall.order.service;
 
 
+import com.atguigu.gulimall.order.vo.Order;
 import com.rabbitmq.client.Channel;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -32,12 +33,12 @@ public class MyService {
      *
      *
      *
-     * @param content
+     * @param order
      */
-    @RabbitListener(queues = "myQueue-Ding")
-    public void hello(Message message,Map<String,Object> content,Channel channel) throws IOException {
-        System.out.println("hello..."+content);
-
+    @RabbitListener(queues = "deadOrderQueue")
+    public void hello(Message message, Order order,Channel channel) throws IOException {
+        System.out.println("order..."+order);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
 
         /**
          * long deliveryTag,消息的标签

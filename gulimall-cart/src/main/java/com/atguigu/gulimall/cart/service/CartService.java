@@ -15,4 +15,7 @@ public interface CartService {
     CartVo updateCart(Long skuId, Integer num, String userKey, String authorization);
 
     CartVo checkCart(String userKey, String authorization, Long[] skuIds, Integer status);
+
+    CartVo selectCartWithStatus(Long id);
+
 }
