@@ -23,4 +23,10 @@ public class Constant {
     public static  final String CART_PREFIX = "cart:user:";
 
     public static Long CART_TIMEOUT = 60*24*30L;
+
+    public static String TOKENS = "Order:token:";
+
+    public static Long TOKENS_TIME_OUT = 60*30L;
+
+    public static String STOCK_LOCK = "Stock:Lock:";//+skuId
 }

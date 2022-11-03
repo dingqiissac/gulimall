@@ -1,6 +1,7 @@
 package com.atguigu.gulimall.cart.service;
 
 import com.atguigu.gulimall.cart.vo.CartVo;
+import com.atguigu.gulimall.cart.vo.ClearCartSkuVo;
 
 import java.util.concurrent.ExecutionException;
 
@@ -18,4 +19,5 @@ public interface CartService {
 
     CartVo selectCartWithStatus(Long id);
 
+    void clearSkuIds(ClearCartSkuVo clearCartSkuVo);
 }

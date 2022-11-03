@@ -3,13 +3,15 @@ package com.atguigu.gulimall.wms.controller;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 
 import com.atguigu.gulimall.commons.bean.PageVo;
 import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.commons.to.WareSkuVo;
+import com.atguigu.gulimall.wms.vo.LockStockVo;
+import com.atguigu.gulimall.wms.vo.SkuLock;
+import com.atguigu.gulimall.wms.vo.SkuLockVo;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.BeanUtils;
@@ -19,8 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.atguigu.gulimall.wms.entity.WareSkuEntity;
 import com.atguigu.gulimall.wms.service.WareSkuService;
-
-
 
 
 /**
@@ -42,14 +42,21 @@ public class WareSkuController {
         List<WareSkuEntity> res = wareSkuService.queryStockBySkuIds(skuIds);
 
         ArrayList<WareSkuVo> wareSkuVos = new ArrayList<>();
-        res.forEach(item->{
+        res.forEach(item -> {
             WareSkuVo wareSkuVo = new WareSkuVo();
-            BeanUtils.copyProperties(item,wareSkuVo);
+            BeanUtils.copyProperties(item, wareSkuVo);
             wareSkuVos.add(wareSkuVo);
         });
         return Resp.ok(wareSkuVos);
     }
 
+    @PostMapping("/checkAndLock")
+    public Resp<LockStockVo> lockAndCheckStock(@RequestBody List<SkuLockVo> skuIds) {
+        LockStockVo lockStockVo = wareSkuService.lockAndCheckStock(skuIds);
+
+        return Resp.ok(lockStockVo);
+
+    }
 
 
     @ApiOperation("获取某个sku的库存信息")
@@ -81,8 +88,8 @@ public class WareSkuController {
     @ApiOperation("详情查询")
     @GetMapping("/info/{id}")
     @PreAuthorize("hasAuthority('wms:waresku:info')")
-    public Resp<WareSkuEntity> info(@PathVariable("id") Long id){
-		WareSkuEntity wareSku = wareSkuService.getById(id);
+    public Resp<WareSkuEntity> info(@PathVariable("id") Long id) {
+        WareSkuEntity wareSku = wareSkuService.getById(id);
 
         return Resp.ok(wareSku);
     }
@@ -93,8 +100,8 @@ public class WareSkuController {
     @ApiOperation("保存")
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('wms:waresku:save')")
-    public Resp<Object> save(@RequestBody WareSkuEntity wareSku){
-		wareSkuService.save(wareSku);
+    public Resp<Object> save(@RequestBody WareSkuEntity wareSku) {
+        wareSkuService.save(wareSku);
 
         return Resp.ok(null);
     }
@@ -105,8 +112,8 @@ public class WareSkuController {
     @ApiOperation("修改")
     @PostMapping("/update")
     @PreAuthorize("hasAuthority('wms:waresku:update')")
-    public Resp<Object> update(@RequestBody WareSkuEntity wareSku){
-		wareSkuService.updateById(wareSku);
+    public Resp<Object> update(@RequestBody WareSkuEntity wareSku) {
+        wareSkuService.updateById(wareSku);
 
         return Resp.ok(null);
     }
@@ -117,8 +124,8 @@ public class WareSkuController {
     @ApiOperation("删除")
     @PostMapping("/delete")
     @PreAuthorize("hasAuthority('wms:waresku:delete')")
-    public Resp<Object> delete(@RequestBody Long[] ids){
-		wareSkuService.removeByIds(Arrays.asList(ids));
+    public Resp<Object> delete(@RequestBody Long[] ids) {
+        wareSkuService.removeByIds(Arrays.asList(ids));
 
         return Resp.ok(null);
     }

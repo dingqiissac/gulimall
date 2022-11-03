@@ -1,5 +1,4 @@
-package com.atguigu.gulimall.order.vo;
-
+package com.atguigu.gulimall.oms.vo;
 
 import lombok.Data;
 

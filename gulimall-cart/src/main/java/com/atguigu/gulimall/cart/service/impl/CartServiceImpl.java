@@ -169,18 +169,30 @@ public class CartServiceImpl implements CartService {
         CartVo cartVo = new CartVo();
 
         if (items != null && items.size() > 0) {
-            items.forEach(item -> {
+            for (String item : items) {
                 CartItemVo vo = JSON.parseObject(item, CartItemVo.class);
                 if (vo.isCheck()) {
                     cartItemVos.add(vo);
                 }
-            });
+            }
         }
 
         cartVo.setItems(cartItemVos);
 
 
         return cartVo;
+    }
+
+    @Override
+    public void clearSkuIds(ClearCartSkuVo clearCartSkuVo) {
+        RMap<String, String> itemsMap = redisson.getMap(Constant.CART_PREFIX + clearCartSkuVo.getUserId());
+
+        List<Long> skuIds = clearCartSkuVo.getSkuIds();
+        for (Long skuId : skuIds) {
+            if(itemsMap.containsKey(skuId.toString())){
+                itemsMap.remove(skuId.toString());
+            }
+        }
     }
 
     private RMap<String, String> mergeCarts(String userKey, Long userId) {

@@ -3,6 +3,7 @@ package com.atguigu.gulimall.cart.controller;
 
 import com.atguigu.gulimall.cart.service.CartService;
 import com.atguigu.gulimall.cart.vo.CartVo;
+import com.atguigu.gulimall.cart.vo.ClearCartSkuVo;
 import com.atguigu.gulimall.commons.bean.Resp;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -42,7 +43,14 @@ public class CartController {
     }
 
 
+    @PostMapping("/clearCartSku")
+    public Resp<Object> clearSkuIds(@RequestBody ClearCartSkuVo clearCartSkuVo){
 
+        cartService.clearSkuIds(clearCartSkuVo);
+
+        return Resp.ok(null);
+
+    }
 
     @ApiOperation("change chosen status")
     @GetMapping("/stop/non")

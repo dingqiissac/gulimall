@@ -3,7 +3,7 @@
 
 <mapper namespace="com.atguigu.gulimall.wms.dao.WareSkuDao">
 
-	<!-- 可根据自己的需求，是否要使用 -->
+    <!-- 可根据自己的需求，是否要使用 -->
     <resultMap type="com.atguigu.gulimall.wms.entity.WareSkuEntity" id="wareSkuMap">
         <result property="id" column="id"/>
         <result property="skuId" column="sku_id"/>
@@ -12,6 +12,28 @@
         <result property="skuName" column="sku_name"/>
         <result property="stockLocked" column="stock_locked"/>
     </resultMap>
+
+    <!-- List<WareSkuEntity> checkStock(@Param("skuId") SkuLockVo skuId); -->
+    <select id="checkStock" resultMap="wareSkuMap">
+        SELECT * FROM `wms_ware_sku` WHERE sku_id = #{skuId.skuId}
+        and stock-stock_locked>=#{skuId.num}
+    </select>
+
+    <!-- void lockStockBySkuIdAndWareId(@Param("wareSkuEntity")WareSkuEntity wareSkuEntity,@Param("num") Integer num); -->
+    <update id="lockStockBySkuIdAndWareId">
+        UPDATE `wms_ware_sku` SET stock_locked = stock_locked + #{num}
+        WHERE ware_id =#{wareSkuEntity.wareId} AND sku_id = #{wareSkuEntity.skuId}
+    </update>
+
+
+    <!--void updateRollBackStock(@Param("skuLock") SkuLock skuLock); -->
+
+    <update id="updateRollBackStock">
+        UPDATE `wms_ware_sku` SET stock_locked = stock_locked - #{skuLock.locked}
+        WHERE ware_id = #{skuLock.wareId} AND sku_id = #{skuLock.skuId}
+    </update>
+
+
 
 
 </mapper>

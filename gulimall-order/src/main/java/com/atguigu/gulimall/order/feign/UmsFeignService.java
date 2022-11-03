@@ -14,4 +14,8 @@ public interface UmsFeignService {
 
     @GetMapping("ums/memberreceiveaddress/member/{id}")
     public Resp<List<MemberAddressVo>> memberAddress(@PathVariable("id") Long memberId);
+
+
+    @GetMapping("ums/memberreceiveaddress/info/{id}")
+    public Resp<MemberAddressVo> info(@PathVariable("id") Long id);
 }

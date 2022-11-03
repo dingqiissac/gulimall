@@ -45,6 +45,12 @@ spring:
           predicates:
             - Path=/api/search/**
 
+        - id: gulimall-order
+          uri: lb://gulimall-order
+          predicates:
+            - Path=/order/**,/api/order/**
+          filters:
+            - RewritePath=/api/(?<segment>.*), /$\{segment}
 
 
 
