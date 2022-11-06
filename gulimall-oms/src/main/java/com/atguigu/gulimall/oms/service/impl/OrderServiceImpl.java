@@ -98,4 +98,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return orderEntity;
     }
 
+    @Override
+    public void updateStatusByOrderNum(String orderNum, Long status) {
+        orderDao.updateStatusByOrderNum(orderNum,status);
+    }
+
+    @Transactional
+    @Override
+    public void deleteOrderAndItems(String num) {
+        orderDao.delete(new QueryWrapper<OrderEntity>().eq("order_sn",num));
+        orderItemDao.delete(new QueryWrapper<OrderItemEntity>().eq("order_sn",num));
+    }
+
 }

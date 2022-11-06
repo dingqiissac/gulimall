@@ -9,6 +9,7 @@ import com.atguigu.gulimall.commons.bean.QueryCondition;
 import com.atguigu.gulimall.commons.bean.Resp;
 import com.atguigu.gulimall.oms.vo.CartVo;
 import com.atguigu.gulimall.oms.vo.OrderSubmitVo;
+import com.baomidou.mybatisplus.extension.service.additional.query.impl.QueryChainWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,27 @@ import com.atguigu.gulimall.oms.service.OrderService;
 public class OrderController {
     @Autowired
     private OrderService orderService;
+
+    @PostMapping("/paySuccess")
+    public Resp<String> paySuccess(@RequestParam("orderNum") String orderNum) {
+
+        orderService.updateStatusByOrderNum(orderNum,1L);
+
+        return Resp.ok("OK");
+    }
+
+    @PostMapping("/deleteOrder")
+    public Resp<String> deleteOrderAndItems(@RequestParam("num") String num) {
+
+        orderService.deleteOrderAndItems(num);
+
+
+        return Resp.ok("ok");
+    }
+
+
+
+
 
     @PostMapping("/createAndSave")
     public Resp<OrderEntity> createAndSaveOrder(@RequestBody OrderSubmitVo orderSubmitVo) {

@@ -22,5 +22,9 @@ public interface OrderService extends IService<OrderEntity> {
     OrderEntity createAndSaveOrder(OrderSubmitVo cartVo);
 
     OrderEntity findByOrderNum(String orderToken);
+
+    void updateStatusByOrderNum(String orderNum,Long status);
+
+    void deleteOrderAndItems(String num);
 }
 

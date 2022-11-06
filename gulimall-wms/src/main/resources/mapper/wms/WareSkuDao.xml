@@ -33,7 +33,12 @@
         WHERE ware_id = #{skuLock.wareId} AND sku_id = #{skuLock.skuId}
     </update>
 
+    <!-- void reduceStocks(@Param("skuLock") SkuLock skuLock);-->
 
+    <update id="reduceStocks">
+        update `wms_ware_sku` set stock = stock - #{skuLock.locked}
+        where ware_id = #{skuLock.wareId} AND sku_id = #{skuLock.skuId}
+    </update>
 
 
 </mapper>

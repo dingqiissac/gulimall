@@ -24,4 +24,6 @@ public interface WareSkuDao extends BaseMapper<WareSkuEntity> {
     Long lockStockBySkuIdAndWareId(@Param("wareSkuEntity")WareSkuEntity wareSkuEntity,@Param("num") Integer num);
 
     void updateRollBackStock(@Param("skuLock") SkuLock skuLock);
+
+    void reduceStocks(@Param("skuLock") SkuLock skuLock);
 }

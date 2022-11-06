@@ -92,11 +92,9 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             String finalToken = token;
             CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
                 SkuLock skuLock = null;
-                try {
-                    skuLock = lockSku(skuLockVo);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
+                skuLock = lockSku(skuLockVo);
+
                 skuLock.setOrderToken(finalToken);
                 skuLocks.add(skuLock);
                 if (skuLock.getSuccess() == false) {
@@ -120,21 +118,25 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         lockStockVo.setLocked(flag.get());
 
 
-        if (flag.get()) {
-            //都锁住了 就发消息给mq
-            rabbitTemplate.convertAndSend(com.atguigu.gulimall.wms.config.Constant.SKU_ID_EXCHANGE,
-                    com.atguigu.gulimall.wms.config.Constant.TO_DELAYED_QUEUE_ROUTE_KEY, skuLocks);
-        }
+        //都锁住了 就发消息给mq
+        rabbitTemplate.convertAndSend(com.atguigu.gulimall.wms.config.Constant.SKU_ID_EXCHANGE,
+                com.atguigu.gulimall.wms.config.Constant.TO_DELAYED_QUEUE_ROUTE_KEY, skuLocks);
 
 
         return lockStockVo;
     }
 
-    private SkuLock lockSku(SkuLockVo skuLockVo) throws InterruptedException {
+
+    private SkuLock lockSku(SkuLockVo skuLockVo) {
         //
         SkuLock skuLock = new SkuLock();
         RLock lock = redissonClient.getLock(Constant.STOCK_LOCK + skuLockVo.getSkuId());
-        boolean b = lock.tryLock(1, 1, TimeUnit.MINUTES);
+        boolean b = false;
+        try {
+            b = lock.tryLock(1, 1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         if (!b) {
             skuLock.setSuccess(false);
@@ -144,7 +146,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         // SELECT * FROM `wms_ware_sku` WHERE sku_id = #{skuId.skuId}
         // and stock-stock_locked>=#{skuId.num}
 
-        try{
+        try {
             List<WareSkuEntity> availableStock = wareSkuDao.checkStock(skuLockVo);
             if (availableStock != null && availableStock.size() > 0) {
                 WareSkuEntity wareSkuEntity = availableStock.get(0);
@@ -163,10 +165,10 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                 skuLock.setLocked(0);
                 skuLock.setSuccess(false);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return skuLock;
-        }finally {
+        } finally {
             lock.unlock();
         }
         return skuLock;

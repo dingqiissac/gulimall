@@ -17,10 +17,10 @@ import java.util.Map;
 public class RabbitConfig {
 
 
-//    @Bean
-//    public  MessageConverter messageConverter(){
-//        return new Jackson2JsonMessageConverter();
-//    }
+    @Bean
+    public  MessageConverter messageConverter(){
+        return new Jackson2JsonMessageConverter();
+    }
 
 
 

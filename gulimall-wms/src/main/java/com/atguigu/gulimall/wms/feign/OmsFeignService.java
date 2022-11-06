@@ -12,4 +12,7 @@ public interface OmsFeignService {
 
     @PostMapping("oms/order/findByOrderNum")
     public Resp<OrderVo> findByOrderNum(@RequestParam("orderToken") String orderToken);
+
+    @PostMapping("oms/order/deleteOrder")
+    public Resp<String> deleteOrderAndItems(@RequestParam("num") String num);
 }

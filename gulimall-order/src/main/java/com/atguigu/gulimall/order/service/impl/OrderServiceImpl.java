@@ -10,16 +10,19 @@ import com.atguigu.gulimall.order.feign.UmsFeignService;
 import com.atguigu.gulimall.order.feign.WmsFeignService;
 import com.atguigu.gulimall.order.service.OrderService;
 import com.atguigu.gulimall.order.vo.*;
-import com.atguigu.gulimall.order.vo.cart.ClearCartSkuVo;
 import com.atguigu.gulimall.order.vo.order.OrderEntityVo;
 import com.atguigu.gulimall.order.vo.order.OrderFeignSubmitVo;
 import com.atguigu.gulimall.order.vo.ware.LockStockVo;
-import com.atguigu.gulimall.order.vo.ware.SkuLock;
 import com.atguigu.gulimall.order.vo.ware.SkuLockVo;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConfirmCallback;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RSemaphore;
+import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +33,6 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -55,6 +57,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     StringRedisTemplate redisTemplate;
+
+    @Autowired
+    RedissonClient redissonClient;
 
     @Autowired
     WmsFeignService wmsFeignService;
@@ -221,9 +226,8 @@ public class OrderServiceImpl implements OrderService {
                         fail.setMsg(BizCode.SERVICE_UNAVAILABLE.getMsg());
                         return fail;
                     }
-//
-//
-//
+                    return Resp.ok(andSaveOrder);
+// TODO: 2022/11/3
 //                    //44444444444444444444444remove chosen items in redis
 //                    CartVo cartVo1data = cartVoResp.getData();
 //                    List<CartItemVo> items1 = cartVo1data.getItems();
@@ -280,27 +284,32 @@ public class OrderServiceImpl implements OrderService {
   return Resp.ok(null);
     }
 
+    @Override
+    public void paySuccess(String orderNum) {
+        omsFeignService.paySuccess(orderNum);
+    }
+
+    @Override
+    public MiaoShaVo miaoSha(Long skuId, Long id) {
+        RSemaphore semaphore = redissonClient.getSemaphore("skuId-28");
+        boolean b = semaphore.tryAcquire(1);
+
+        if(!b){
+            return null;
+        }
+
+        MiaoShaVo miaoShaVo = new MiaoShaVo();
+        miaoShaVo.setToken(IdWorker.getTimeId());
+        miaoShaVo.setSkuId(skuId);
+        miaoShaVo.setUserId(id);
+        rabbitTemplate.convertAndSend("msExchange","msKey",miaoShaVo);
+
+        return miaoShaVo;
+    }
+
     private Long getCurrentUserId(String authorization) {
         Object id = GuliJwtUtils.getJwtBody(authorization).get("id");
         return Long.parseLong(id.toString());
     }
 
-
-    //@RabbitListener(queues = "closeOrderQueue")
-    public void closeOrder(Order order, Channel channel, Message message) throws IOException {
-
-        System.out.println("收到的订单内容：" + order);
-
-        Long orderId = order.getOrderId();
-        System.out.println("正在数据库查询【" + orderId + "】订单状态，" + order.getStatus());
-
-        if (order.getStatus() != 1) {
-            System.out.println("这个订单没有被支付，正在准备关闭。。。数据库状态改为-1");
-        }
-
-
-        //给MQ回复，我们已经处理完成此消息
-        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-
-    }
 }
